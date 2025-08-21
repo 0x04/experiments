@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Long Click Indicator</title>
+<style>
+  body {
+    margin: 2rem;
+    height: 1000vh;
+  }
+
+  button.test-button {
+    display: block;
+    margin-bottom: 200vh;
+    border: 0;
+    border-radius: 0.25rem;
+    padding: 0.5rem 1rem;
+    background: silver;
+  }
+
+  /*
+  @property --value {
+    syntax: '<angle>';
+    inherits: false;
+    initial-value: 0deg;
+  }
+  @property --page-x {
+    syntax: '<length>';
+    inherits: false;
+    initial-value: 0;
+  }
+  @property --page-y {
+    syntax: '<length>';
+    inherits: false;
+    initial-value: 0;
+  }
+  */
+
+  .ring-indicator {
+    --size: 3rem;
+    --width: 0.25rem;
+    --color-fg: #333;
+    --color-bg: #CCC;
+    --value: 0deg;
+
+    border-radius: 50%;
+    width: var(--size);
+    height: var(--size);
+    background: conic-gradient(
+        var(--color-fg) var(--value),
+        var(--color-bg) calc(var(--value) + 1deg)
+    );
+    mask: radial-gradient(
+        transparent calc(var(--size) / 2 - var(--width)),
+        #000 calc(var(--size) / 2 - var(--width) + 1px)
+    );
+    pointer-events: none;
+  }
+
+  .ring-indicator-mouse-attachment {
+    --cursor-width: 12px;
+    --cursor-height: 19px;
+    --offset: calc(var(--size) / 2 * -1);
+    --offset-x: calc(var(--offset) + var(--cursor-width) / 2);
+    --offset-y: calc(var(--offset) + var(--cursor-height) / 2);
+
+    position: absolute;
+    inset: 0 auto auto 0;
+    translate: calc(var(--page-x) + var(--offset-x)) calc(var(--page-y) + var(--offset-y));
+  }
+</style>
+</head>
+<body>
+<button id="testButton1" class="test-button">This is long click button #1</button>
+<button id="testButton2" class="test-button">This is long click button #2</button>
+<script>
+  // First prototype
+  // setInterval(() => {
+  //   const ring = document.querySelector('.ring-mask');
+  //   const value = parseFloat(getComputedStyle(ring).getPropertyValue('--value'));
+  //   ring.style.setProperty('--value', (value + 1) % 360 + 'deg');
+  // }, 25);
+
+  // Second prototype
+  // function requestRingFrame(
+  //   duration,
+  //   callback = () => {
+  //   },
+  //   start = performance.now()
+  // ) {
+  //   const ring = document.querySelector('.ring-indicator');
+  //   const now = performance.now();
+  //   const delta = now - start;
+  //   const angle = Math.min(360, delta / duration * 360);
+  //
+  //   ring.style.setProperty('--value', `${angle}deg`);
+  //
+  //   if (delta > duration) {
+  //     return callback();
+  //   }
+  //
+  //   requestAnimationFrame(
+  //     requestRingFrame.bind(null, duration, callback, start)
+  //   );
+  // }
+  //
+  // function startRingAnimation(duration = 500) {
+  //   requestAnimationFrame(requestRingFrame.bind(null, duration, () => console.log('done')));
+  // }
+  //
+  // startRingAnimation(5000);
+
+  class RingIndicator {
+    static EVENT_PLAYED = 'played';
+    static EVENT_STOPPED = 'stopped';
+    element = null;
+    start = null;
+    duration = null;
+    requestId = null;
+
+    constructor(duration = 1000) {
+      this.element = document.createElement('div');
+      this.element.classList.add('ring-indicator');
+      this.duration = duration;
+    }
+
+    requestFrame() {
+      const now = performance.now();
+      const delta = now - this.start;
+      const angle = Math.min(360, delta / this.duration * 360);
+
+      this.element.style.setProperty('--value', `${angle}deg`);
+
+      if (delta > this.duration) {
+        this.element.dispatchEvent(new CustomEvent(RingIndicator.EVENT_PLAYED));
+        return this.requestId;
+      }
+
+      return this.requestId = requestAnimationFrame(
+        this.requestFrame.bind(this)
+      );
+    }
+
+    attach() {
+      document.body.appendChild(this.element);
+    }
+
+    detach() {
+      this.element.remove();
+    }
+
+    play() {
+      if (this.element.parentElement && !this.requestId) {
+        this.start = performance.now();
+        this.requestId = requestAnimationFrame(
+          this.requestFrame.bind(this)
+        );
+      }
+    }
+
+    stop() {
+      if (this.element.parentElement && this.requestId) {
+        cancelAnimationFrame(this.requestId);
+        this.requestId = null;
+        this.element.style.setProperty('--value', `0deg`);
+        this.element.dispatchEvent(new CustomEvent(RingIndicator.EVENT_STOPPED));
+      }
+    }
+  }
+
+  class RingIndicatorMouseAttachment extends RingIndicator {
+    constructor(duration = 1000) {
+      super(duration);
+
+      this.onMouseMove = debounce(this.onMouseMove.bind(this), 5);
+      this.element.classList.add('ring-indicator-mouse-attachment');
+    }
+
+    attach() {
+      super.attach();
+      document.addEventListener('mousemove', this.onMouseMove);
+    }
+
+    detach() {
+      super.detach();
+      document.removeEventListener('mousemove', this.onMouseMove);
+    }
+
+    setPageCoordinates(pageX, pageY) {
+      this.element.style.setProperty('--page-x', `${pageX}px`);
+      this.element.style.setProperty('--page-y', `${pageY}px`);
+    }
+
+    onMouseMove = (event) => {
+      this.setPageCoordinates(event.pageX, event.pageY);
+    };
+  }
+
+  class LongClickElement extends RingIndicatorMouseAttachment {
+    constructor(targetElement, duration = 1000) {
+      super(duration);
+      this.targetElement = targetElement;
+      this.eventProcessed = false;
+
+      this.targetElement.addEventListener('click', (event) => {
+        if (!this.eventProcessed) {
+          event.stopImmediatePropagation();
+          event.preventDefault();
+        }
+      }, true);
+
+      this.targetElement.addEventListener('mousedown', (event) => {
+        event.preventDefault();
+        this.setPageCoordinates(event.pageX, event.pageY);
+        // Ensure ringe attachment before play (e.g. no previous mouseenter)
+        this.attach();
+        this.play();
+      });
+
+      this.targetElement.addEventListener('mouseup', (event) => {
+        event.preventDefault();
+        this.stop();
+      });
+
+      this.targetElement.addEventListener('mouseenter', (event) => {
+        this.setPageCoordinates(event.pageX, event.pageY);
+        this.attach();
+      });
+
+      this.targetElement.addEventListener('mouseleave', (event) => {
+        this.setPageCoordinates(event.pageX, event.pageY);
+        this.detach();
+      });
+
+      this.element.addEventListener(RingIndicator.EVENT_PLAYED, () => {
+        this.stop();
+        this.detach();
+        this.eventProcessed = true;
+        this.targetElement.click();
+        this.eventProcessed = false;
+      });
+    }
+  }
+
+  function debounce(fn, delay) {
+    let timeoutId;
+
+    return function (...args) {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        fn.apply(this, args);
+      }, delay);
+    };
+  }
+
+  // const ring = new RingIndicator(3000, () => console.log('done'));
+  // ring.play();
+  //
+  // setTimeout(() => ring.stop(), 1500);
+  // setTimeout(() => ring.play(), 3000);
+
+  // const ringAttachment = new RingIndicatorMouseAttachment();
+  // ringAttachment.attach();
+
+  function onTestClick(event) {
+    event.target.style.setProperty(
+      'background-color',
+      `hsl(${Math.floor(Math.random() * 360)}, 100%, 80%)`
+    );
+    console.log(`"${event.target.innerText}" clicked!`);
+  }
+
+  const testButton1 = document.querySelector('#testButton1');
+
+  testButton1.addEventListener('click', onTestClick);
+
+  const longClickElement1 = new LongClickElement(
+    testButton1,
+    750
+  );
+
+  const testButton2 = document.querySelector('#testButton2');
+
+  testButton2.addEventListener('click', onTestClick);
+
+  const longClickElement2 = new LongClickElement(
+    testButton2,
+    750
+  );
+</script>
+</body>
+</html>
