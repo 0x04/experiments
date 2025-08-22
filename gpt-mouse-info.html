@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ultimate Maus-Tracker Demo – Pink-Trail mit Geschwindigkeit</title>
+<style>
+  body {
+    margin: 0;
+    height: 500vh; /* scrollbar erzeugen */
+    background: #111;
+    font-family: monospace;
+    color: #eee;
+    user-select: none;
+  }
+
+  .cursor-dot {
+    position: fixed;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #f07;
+    pointer-events: none;
+    left: 0;
+    top: 0;
+    transform: translate(-50%, -50%);
+    transition: width 0.1s, height 0.1s, background 0.1s;
+  }
+
+  .info {
+    position: fixed;
+    left: 10px;
+    bottom: 10px;
+    background: rgba(0, 0, 0, .6);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .hint {
+    position: fixed;
+    left: 10px;
+    top: 10px;
+    background: rgba(0, 0, 0, .6);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+
+  canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="trail"></canvas>
+<div class="cursor-dot" id="cursor"></div>
+<div class="hint">Klick: Pointer Lock an · ESC: aus</div>
+<div class="info" id="info">Bewege die Maus…</div>
+<script>
+  const cursor = document.getElementById('cursor');
+  const info = document.getElementById('info');
+  const canvas = document.getElementById('trail');
+  const ctx = canvas.getContext('2d');
+
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  let x = innerWidth / 2;
+  let y = innerHeight / 2;
+
+  const trailMax = 60;
+  let trail = [];
+  let wheelData = null;
+
+  // Geschwindigkeit berechnen
+  function getSpeed(p1, p2) {
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function renderDot() {
+    cursor.style.left = x + 'px';
+    cursor.style.top = y + 'px';
+
+    if (wheelData) {
+      const scale = Math.min(30, Math.abs(wheelData.deltaY) / 2);
+      cursor.style.width = 16 + scale + 'px';
+      cursor.style.height = 16 + scale + 'px';
+      cursor.style.background = wheelData.deltaY > 0 ? '#0ff' : '#ff0';
+    } else {
+      cursor.style.width = '16px';
+      cursor.style.height = '16px';
+      cursor.style.background = '#f07';
+    }
+  }
+
+  function renderInfo(e) {
+    if (document.pointerLockElement) {
+      info.innerHTML = `
+      <b>Pointer Lock Mode</b><br>
+      movementX / movementY : ${e.movementX} , ${e.movementY}<br>
+      buttons               : ${e.buttons}<br>
+      wheel                 : ${wheelData ? wheelData.deltaY : '—'}
+    `;
+    } else {
+      info.innerHTML = `
+      <b>Normal Mode</b><br>
+      clientX / clientY : ${e.clientX} , ${e.clientY}<br>
+      pageX / pageY     : ${e.pageX} , ${e.pageY}<br>
+      screenX / screenY : ${e.screenX} , ${e.screenY}<br>
+      movementX / Y     : ${e.movementX} , ${e.movementY}<br>
+      buttons           : ${e.buttons}<br>
+      wheel             : ${wheelData ? wheelData.deltaY : '—'}
+    `;
+    }
+  }
+
+  // Trail mit variabler Breite, Pink-Grundton, Blauanteil nach Geschwindigkeit
+  function drawTrail() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (trail.length < 2) return;
+
+    for (let i = 1; i < trail.length; i++) {
+      const p = trail[i];
+      const prev = trail[i - 1];
+      const speed = p.speed || 0;
+
+      // Breite: hinten dünner, vorne dicker
+      const width = 1 + 3 * (i / trail.length);
+
+      // Farb-Heatmap: Grund-Pink + Blauanteil + leichte Helligkeit nach Geschwindigkeit
+      const blue = Math.min(255, speed * 15);
+      const red = Math.min(255, 255 - (speed * 5));      // schnelle Punkte heller Pink/Rot
+      const green = Math.min(119, 119 - (speed * 3));   // leicht dunkler bei schnell
+      ctx.strokeStyle = `rgb(${red},${green},${119 + blue})`;
+
+      ctx.lineWidth = width;
+      ctx.lineCap = 'round';
+
+      ctx.beginPath();
+      ctx.moveTo(prev.x, prev.y);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+    }
+
+    // Wheel-Partikel ohne Transparenz, Größe proportional zur Scrollstärke
+    if (wheelData) {
+      ctx.fillStyle = 'rgb(255,255,0)'; // Gelb, deckend
+      ctx.beginPath();
+      ctx.arc(x, y, Math.min(15, Math.abs(wheelData.deltaY) / 2), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  document.addEventListener('mousemove', e => {
+    if (document.pointerLockElement) {
+      x += e.movementX;
+      y += e.movementY;
+    } else {
+      x = e.clientX;
+      y = e.clientY;
+    }
+
+    x = Math.max(0, Math.min(window.innerWidth, x));
+    y = Math.max(0, Math.min(window.innerHeight, y));
+
+    renderDot();
+    renderInfo(e);
+
+    const last = trail[trail.length - 1] || { x: x, y: y };
+    const speed = getSpeed(last, { x, y });
+    trail.push({ x, y, speed });
+    if (trail.length > trailMax) trail.shift();
+
+    drawTrail();
+
+    if (wheelData) {
+      clearTimeout(wheelData.timeout);
+      wheelData.timeout = setTimeout(() => {
+        wheelData = null;
+        renderDot();
+        renderInfo(e);
+        drawTrail();
+      }, 100);
+    }
+  });
+
+  document.addEventListener('click', () => document.body.requestPointerLock?.());
+
+  document.addEventListener('pointerlockchange', () => {
+    trail = [];
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  });
+
+  window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  });
+
+  document.addEventListener('wheel', e => {
+    wheelData = { deltaX: e.deltaX, deltaY: e.deltaY };
+  });
+
+  renderDot();
+</script>
+</body>
+</html>
