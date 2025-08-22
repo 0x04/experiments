@@ -2,19 +2,42 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Long Click Indicator</title>
 <style>
   body {
-    margin: 2rem;
+    margin: 1rem 1.5rem;
+    font-family: system-ui, sans-serif;
   }
 
   button.test-button {
     display: block;
-    margin-bottom: 80vh;
+    margin-bottom: 50vh;
     border: 0;
     border-radius: 0.25rem;
     padding: 0.5rem 1rem;
     background: silver;
+  }
+
+  .description {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    max-width: calc(640px - 1.5rem);
+
+    h1 {
+      margin: 0;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    .warning {
+      color: red;
+      font-weight: bold;
+    }
   }
 
   /*
@@ -23,23 +46,25 @@
     inherits: false;
     initial-value: 0deg;
   }
+  */
+
   @property --page-x {
     syntax: '<length>';
     inherits: false;
     initial-value: 0;
   }
+
   @property --page-y {
     syntax: '<length>';
     inherits: false;
     initial-value: 0;
   }
-  */
 
   .ring-indicator {
     --size: 3rem;
     --width: 0.25rem;
     --color-fg: #333;
-    --color-bg: #CCC;
+    --color-bg: #ccc;
     --value: 0deg;
 
     border-radius: 50%;
@@ -70,8 +95,17 @@
 </style>
 </head>
 <body>
-<button id="testButton1" class="test-button">This is long click button #1</button>
-<button id="testButton2" class="test-button">This is long click button #2</button>
+<div class="description">
+  <h1>Long click ring indicator</h1>
+  <p class="warning">NOTICE: Currently it is only working on desktop browsers!</p>
+  <p>This experiment creates a ring indicator when you hover the linked element, in this case a button.</p>
+  <p>When you click and hold the button, the indicator runs for a specified time and triggers the click event
+    handler.</p>
+  <p>The indicator is reset after the click has been processed or when you release the mouse button before
+    completion.</p>
+</div>
+<button class="test-button" id="testButton1">This is long click button #1</button>
+<button class="test-button" id="testButton2">This is long click button #2</button>
 <script>
   /* region RingIndicator */
 
