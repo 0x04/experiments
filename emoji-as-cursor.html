@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Emoji as Cursor</title>
+<style>
+  html, body {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    height: 100%;
+    font-family: system-ui, sans-serif;
+  }
+
+  .notice {
+    user-select: none;
+    margin: 0;
+    padding: 2rem;
+  }
+</style>
+</head>
+<body>
+<script>
+  function getRandomEmoji() {
+    const emojiStart = 0x1F600;
+    const emojiEnd = 0x1F64F;
+    const randomCodePoint = Math.floor(Math.random() * (emojiEnd - emojiStart + 1)) + emojiStart;
+
+    return String.fromCodePoint(randomCodePoint);
+  }
+
+  function setEmojiCursor(emoji) {
+    // Max dimensions seem to be 128x128 (Windows)
+    const cursorUrl = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128">
+        <!--rect width="128" height="128" fill="#ff00ff7f" /-->
+        <text y="97.5" font-size="93">${emoji}</text>
+      </svg>`;
+    document.body.style.setProperty('cursor', `url(data:image/svg+xml;utf8,${encodeURIComponent(cursorUrl)}), auto`);
+  }
+
+  function setRandomEmojiCursor() {
+    const emoji = getRandomEmoji();
+    setEmojiCursor(emoji);
+  }
+
+  setRandomEmojiCursor();
+
+  document.addEventListener('click', () => setRandomEmojiCursor());
+</script>
+<h1 class="notice">Click anywhere to change the cursor emoji!</h1>
+</body>
+</html>
