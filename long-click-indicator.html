@@ -6,12 +6,11 @@
 <style>
   body {
     margin: 2rem;
-    height: 1000vh;
   }
 
   button.test-button {
     display: block;
-    margin-bottom: 200vh;
+    margin-bottom: 80vh;
     border: 0;
     border-radius: 0.25rem;
     padding: 0.5rem 1rem;
@@ -74,41 +73,7 @@
 <button id="testButton1" class="test-button">This is long click button #1</button>
 <button id="testButton2" class="test-button">This is long click button #2</button>
 <script>
-  // First prototype
-  // setInterval(() => {
-  //   const ring = document.querySelector('.ring-mask');
-  //   const value = parseFloat(getComputedStyle(ring).getPropertyValue('--value'));
-  //   ring.style.setProperty('--value', (value + 1) % 360 + 'deg');
-  // }, 25);
-
-  // Second prototype
-  // function requestRingFrame(
-  //   duration,
-  //   callback = () => {
-  //   },
-  //   start = performance.now()
-  // ) {
-  //   const ring = document.querySelector('.ring-indicator');
-  //   const now = performance.now();
-  //   const delta = now - start;
-  //   const angle = Math.min(360, delta / duration * 360);
-  //
-  //   ring.style.setProperty('--value', `${angle}deg`);
-  //
-  //   if (delta > duration) {
-  //     return callback();
-  //   }
-  //
-  //   requestAnimationFrame(
-  //     requestRingFrame.bind(null, duration, callback, start)
-  //   );
-  // }
-  //
-  // function startRingAnimation(duration = 500) {
-  //   requestAnimationFrame(requestRingFrame.bind(null, duration, () => console.log('done')));
-  // }
-  //
-  // startRingAnimation(5000);
+  /* region RingIndicator */
 
   class RingIndicator {
     static EVENT_PLAYED = 'played';
@@ -168,7 +133,7 @@
     }
   }
 
-  class RingIndicatorMouseAttachment extends RingIndicator {
+  class RingIndicatorAttachment extends RingIndicator {
     constructor(duration = 1000) {
       super(duration);
 
@@ -196,49 +161,65 @@
     };
   }
 
-  class LongClickElement extends RingIndicatorMouseAttachment {
+  class RingIndicatorLongClick extends RingIndicatorAttachment {
+    targetElement = null;
+    eventProcessed = false;
+
     constructor(targetElement, duration = 1000) {
       super(duration);
+
       this.targetElement = targetElement;
-      this.eventProcessed = false;
+      this.onMouseEvent = this.onMouseEvent.bind(this);
+      this.onPlayed = this.onPlayed.bind(this);
 
-      this.targetElement.addEventListener('click', (event) => {
-        if (!this.eventProcessed) {
-          event.stopImmediatePropagation();
+      // It's important to use capture phase for click events
+      this.targetElement.addEventListener('click', this.onMouseEvent, { capture: true });
+      this.targetElement.addEventListener('mousedown', this.onMouseEvent);
+      this.targetElement.addEventListener('mouseup', this.onMouseEvent);
+      this.targetElement.addEventListener('mouseenter', this.onMouseEvent);
+      this.targetElement.addEventListener('mouseleave', this.onMouseEvent);
+
+      this.element.addEventListener(RingIndicator.EVENT_PLAYED, this.onPlayed);
+    }
+
+    onMouseEvent(event) {
+      switch (event.type) {
+        case 'click':
+          if (!this.eventProcessed) {
+            event.stopPropagation();
+            event.preventDefault();
+          }
+          break;
+
+        case 'mousedown':
           event.preventDefault();
-        }
-      }, true);
+          this.setPageCoordinates(event.pageX, event.pageY);
+          this.attach();
+          this.play();
+          break;
 
-      this.targetElement.addEventListener('mousedown', (event) => {
-        event.preventDefault();
-        this.setPageCoordinates(event.pageX, event.pageY);
-        // Ensure ringe attachment before play (e.g. no previous mouseenter)
-        this.attach();
-        this.play();
-      });
+        case 'mouseup':
+          event.preventDefault();
+          this.stop();
+          break;
 
-      this.targetElement.addEventListener('mouseup', (event) => {
-        event.preventDefault();
-        this.stop();
-      });
+        case 'mouseenter':
+          this.setPageCoordinates(event.pageX, event.pageY);
+          this.attach();
+          break;
 
-      this.targetElement.addEventListener('mouseenter', (event) => {
-        this.setPageCoordinates(event.pageX, event.pageY);
-        this.attach();
-      });
+        case 'mouseleave':
+          this.setPageCoordinates(event.pageX, event.pageY);
+          this.detach();
+          break;
+      }
+    }
 
-      this.targetElement.addEventListener('mouseleave', (event) => {
-        this.setPageCoordinates(event.pageX, event.pageY);
-        this.detach();
-      });
-
-      this.element.addEventListener(RingIndicator.EVENT_PLAYED, () => {
-        this.stop();
-        this.detach();
-        this.eventProcessed = true;
-        this.targetElement.click();
-        this.eventProcessed = false;
-      });
+    onPlayed() {
+      this.stop();
+      this.eventProcessed = true;
+      this.targetElement.click();
+      this.eventProcessed = false;
     }
   }
 
@@ -253,14 +234,9 @@
     };
   }
 
-  // const ring = new RingIndicator(3000, () => console.log('done'));
-  // ring.play();
-  //
-  // setTimeout(() => ring.stop(), 1500);
-  // setTimeout(() => ring.play(), 3000);
+  /* endregion */
 
-  // const ringAttachment = new RingIndicatorMouseAttachment();
-  // ringAttachment.attach();
+  /* region Example */
 
   function onTestClick(event) {
     event.target.style.setProperty(
@@ -274,7 +250,7 @@
 
   testButton1.addEventListener('click', onTestClick);
 
-  const longClickElement1 = new LongClickElement(
+  const longClickElement1 = new RingIndicatorLongClick(
     testButton1,
     750
   );
@@ -283,10 +259,12 @@
 
   testButton2.addEventListener('click', onTestClick);
 
-  const longClickElement2 = new LongClickElement(
+  const longClickElement2 = new RingIndicatorLongClick(
     testButton2,
     750
   );
+
+  /* endregion */
 </script>
 </body>
 </html>
