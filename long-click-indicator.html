@@ -74,6 +74,9 @@
         var(--color-fg) var(--value),
         var(--color-bg) calc(var(--value) + 1deg)
     );
+    opacity: 0;
+    scale: 0;
+    transition: opacity 150ms linear, scale 150ms linear;
     mask: radial-gradient(
         transparent calc(var(--size) / 2 - var(--width)),
         #000 calc(var(--size) / 2 - var(--width) + 1px)
@@ -81,7 +84,12 @@
     pointer-events: none;
   }
 
-  .ring-indicator-mouse-attachment {
+  .ring-indicator--visible {
+    opacity: 1;
+    scale: 1;
+  }
+
+  .ring-indicator__mouse-attachment {
     --cursor-width: 12px;
     --cursor-height: 19px;
     --offset: calc(var(--size) / 2 * -1);
@@ -142,11 +150,17 @@
 
     attach() {
       document.body.appendChild(this.element);
+      requestNextAnimationFrame(() =>
+        this.element.classList.add('ring-indicator--visible')
+      );
     }
 
     detach() {
-      this.stop();
-      this.element.remove();
+      this.element.addEventListener('transitionend', () => {
+        this.stop();
+        this.element.remove();
+      }, { once: true });
+      this.element.classList.remove('ring-indicator--visible')
     }
 
     play() {
@@ -175,7 +189,7 @@
       this.onMouseMove = debounce(this.onMouseMove.bind(this), 5);
 
       const { element } = (RingIndicatorAttachment.ringIndicator ??= new RingIndicator(duration));
-      element.classList.add('ring-indicator-mouse-attachment');
+      element.classList.add('ring-indicator__mouse-attachment');
     }
 
     get ringIndicator() {
@@ -285,6 +299,12 @@
         fn.apply(this, args);
       }, delay);
     };
+  }
+
+  function requestNextAnimationFrame(fn) {
+    return requestAnimationFrame(
+      () => requestAnimationFrame(fn)
+    );
   }
 
   /* endregion */
