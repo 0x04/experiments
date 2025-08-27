@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
 <title>Long Click Indicator</title>
 <style>
   body {
@@ -160,7 +160,7 @@
         this.stop();
         this.element.remove();
       }, { once: true });
-      this.element.classList.remove('ring-indicator--visible')
+      this.element.classList.remove('ring-indicator--visible');
     }
 
     play() {
