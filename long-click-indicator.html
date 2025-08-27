@@ -168,27 +168,34 @@
     }
   }
 
-  class RingIndicatorAttachment extends RingIndicator {
-    constructor(duration = 1000) {
-      super(duration);
+  class RingIndicatorAttachment {
+    static ringIndicator = null;
 
+    constructor(duration = 1000) {
       this.onMouseMove = debounce(this.onMouseMove.bind(this), 5);
-      this.element.classList.add('ring-indicator-mouse-attachment');
+
+      const { element } = (RingIndicatorAttachment.ringIndicator ??= new RingIndicator(duration));
+      element.classList.add('ring-indicator-mouse-attachment');
+    }
+
+    get ringIndicator() {
+      return RingIndicatorAttachment.ringIndicator;
     }
 
     attach() {
-      super.attach();
+      this.ringIndicator.attach();
       document.addEventListener('mousemove', this.onMouseMove);
     }
 
     detach() {
-      super.detach();
+      this.ringIndicator.detach();
       document.removeEventListener('mousemove', this.onMouseMove);
     }
 
     setPageCoordinates(pageX, pageY) {
-      this.element.style.setProperty('--page-x', `${pageX}px`);
-      this.element.style.setProperty('--page-y', `${pageY}px`);
+      const { element } = this.ringIndicator;
+      element.style.setProperty('--page-x', `${pageX}px`);
+      element.style.setProperty('--page-y', `${pageY}px`);
     }
 
     onMouseMove = (event) => {
@@ -213,8 +220,19 @@
       this.targetElement.addEventListener('mouseup', this.onMouseEvent);
       this.targetElement.addEventListener('mouseenter', this.onMouseEvent);
       this.targetElement.addEventListener('mouseleave', this.onMouseEvent);
+    }
 
-      this.element.addEventListener(RingIndicator.EVENT_PLAYED, this.onPlayed);
+    attach() {
+      super.attach();
+      this.ringIndicator
+        .element.addEventListener(RingIndicator.EVENT_PLAYED, this.onPlayed);
+    }
+
+    detach() {
+      super.detach();
+
+      this.ringIndicator
+        .element.removeEventListener(RingIndicator.EVENT_PLAYED, this.onPlayed);
     }
 
     onMouseEvent(event) {
@@ -230,12 +248,12 @@
           event.preventDefault();
           this.setPageCoordinates(event.pageX, event.pageY);
           this.attach();
-          this.play();
+          this.ringIndicator.play();
           break;
 
         case 'mouseup':
           event.preventDefault();
-          this.stop();
+          this.ringIndicator.stop();
           break;
 
         case 'mouseenter':
@@ -251,7 +269,7 @@
     }
 
     onPlayed() {
-      this.stop();
+      this.ringIndicator.stop();
       this.eventProcessed = true;
       this.targetElement.click();
       this.eventProcessed = false;
