@@ -33,8 +33,6 @@ export default function(element) {
   }
 </style>
 <body>
-<div class="background-red" data-has-behavior>This is a test behavior (./css-behavior/behaviors/test.mjs)!</div>
-<div class="background-red" data-has-behavior>This is a test behavior (2) (./css-behavior/behaviors/test.mjs)!</div>
 <script>
   /*
   ### Element selection
@@ -128,5 +126,18 @@ export default function(element) {
     });
   })();
 </script>
+<!-- Testing -->
+<script>
+  function createTestElement() {
+    const div = document.createElement('div');
+    div.className = 'background-red';
+    div.setAttribute('data-has-behavior', '');
+    div.textContent = `This is a dynamically added test behavior element (${document.querySelectorAll('button ~ .background-red').length + 1})!`;
+    document.body.appendChild(div);
+  }
+</script>
+<div class="background-red" data-has-behavior>This is a test behavior (./css-behavior/behaviors/test.mjs)!</div>
+<div class="background-red" data-has-behavior>This is a test behavior (2) (./css-behavior/behaviors/test.mjs)!</div>
+<button onclick="createTestElement()">Add new element</button>
 </body>
 </html>
