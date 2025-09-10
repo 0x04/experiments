@@ -1,3 +1,26 @@
+<!--
+This is a polyfill for CSS Behavior, like IEs a HTML Component aka HTC. It
+allows you to attach JavaScript behavior to elements via CSS.
+
+Example usage:
+In your CSS, you can write:
+
+```css
+.my-element {
+  --behavior: url('path/to/your-behavior.js');
+}
+```
+
+And in your JavaScript file ("your-behavior.js"), you can define the behavior:
+
+```js
+export default function(element) {
+  element.addEventListener('click', () => {
+    alert('Element clicked!');
+  });
+}
+```
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,27 +36,13 @@
 <div class="background-red" data-has-behavior>This is a test behavior (./css-behavior/behaviors/test.mjs)!</div>
 <div class="background-red" data-has-behavior>This is a test behavior (2) (./css-behavior/behaviors/test.mjs)!</div>
 <script>
-  // This is a polyfill for CSS Behavior (like IE-HTC)
-  // It allows you to attach JavaScript behavior to elements via CSS
-  // Example usage:
-  // In your CSS, you can write:
-  // .my-element {
-  //   behavior: url('path/to/your-behavior.js');
-  // }
-  //
-  // And in your JavaScript file (your-behavior.js), you can define the behavior:
-  // export default function(element) {
-  //   element.addEventListener('click', () => {
-  //     alert('Element clicked!');
-  //   });
-  // }
-
   /*
   ### Element selection
 
-  You should of course not scan the entire DOM for every element to check whether it has a `--behavior` property. That
-  would be inefficient and slow. Therefore there should be a way to preselect elements. This can be done, for example,
-  via a CSS class or an attribute.
+  You should of course not scan the entire DOM for every element to check
+  whether it has a `--behavior` property. That would be inefficient and slow.
+  Therefore there should be a way to preselect elements. This can be done, for
+  example, via a CSS class or an attribute.
 
   1. CSS class:
      ```css
