@@ -29,110 +29,23 @@ export default function(element) {
 </head>
 <style>
   .background-red {
-    --behavior: url('./css-behavior/behaviors/test.mjs');
+    --behavior: url('/css-behavior/behaviors/test.mjs');
   }
 </style>
 <body>
-<script>
-  /*
-  ### Element selection
+<script type="module">
+  import { init } from './css-behavior/css-behavior.mjs';
 
-  You should of course not scan the entire DOM for every element to check
-  whether it has a `--behavior` property. That would be inefficient and slow.
-  Therefore there should be a way to preselect elements. This can be done, for
-  example, via a CSS class or an attribute.
-
-  1. CSS class:
-     ```css
-     .has-behavior.your-behavior {
-       --behavior: url('path/to/your-behavior.js');
-     }
-     ```
-     ```html
-        <div class="has-behavior"></div>
-     ```
-  2. Attribute:
-     ```html
-       <div style="--behavior: url(path/to/your-behavior.js);"></div>
-     ```
-     ```html
-       <div data-has-behavior></div>
-     ```
-     ```html
-       <div data-behavior="path/to/your-behavior.js"></div>
-     ```
-  */
-
-  (function () {
-    const behaviorProperty = '--behavior';
-    const behaviorMap = new Map();
-
-    function applyBehavior(element, url) {
-      const existingBehavior = behaviorMap.get(url);
-
-      if (existingBehavior) {
-        if (existingBehavior instanceof Promise) {
-          existingBehavior.then(behavior => behavior(element));
-          return;
-        }
-
-        existingBehavior(element);
-      }
-      else {
-        const promise = import(url)
-          .then(module => {
-            const behavior = module.default;
-            behavior(element);
-            behaviorMap.set(url, behavior);
-            return behavior;
-          }).catch(err => {
-            console.error(`Failed to load behavior from ${url}:`, err);
-          });
-
-        behaviorMap.set(url, promise);
-      }
-    }
-
-    function processElement(element) {
-      const style = getComputedStyle(element);
-      const behaviorUrl = style.getPropertyValue(behaviorProperty).trim();
-
-      if (behaviorUrl) {
-        const urlMatch = behaviorUrl.match(/url\(['"]?(.*?)['"]?\)/);
-        if (urlMatch && urlMatch[1]) {
-          applyBehavior(element, urlMatch[1]);
-        }
-      }
-    }
-
-    function observeMutations() {
-      const observer = new MutationObserver(mutations => {
-        mutations.forEach(mutation => {
-          mutation.addedNodes.forEach(node => {
-            if (node.nodeType === Node.ELEMENT_NODE) {
-              processElement(node);
-              node.querySelectorAll('*').forEach(child => processElement(child));
-            }
-          });
-        });
-      });
-
-      observer.observe(document.documentElement, { childList: true, subtree: true });
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('*').forEach(element => processElement(element));
-      observeMutations();
-    });
-  })();
+  init();
 </script>
 <!-- Testing -->
 <script>
   function createTestElement() {
     const div = document.createElement('div');
+    const quantity = document.querySelectorAll('div[data-has-behavior]').length + 1;
     div.className = 'background-red';
     div.setAttribute('data-has-behavior', '');
-    div.textContent = `This is a dynamically added test behavior element (${document.querySelectorAll('button ~ .background-red').length + 1})!`;
+    div.textContent = `This is a dynamically added test behavior element (${quantity})!`;
     document.body.appendChild(div);
   }
 </script>
