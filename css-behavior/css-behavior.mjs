@@ -49,14 +49,23 @@ class CSSBehavior {
 
   processElement(element) {
     const style = getComputedStyle(element);
-    const behaviorUrl = style.getPropertyValue(this.#property).trim();
+    const behaviorUrl = style.getPropertyValue(this.#property);
 
     if (behaviorUrl) {
-      const urlMatch = behaviorUrl.match(/url\(['"]?([^'"]+)['"]?\)/i);
-      if (urlMatch && urlMatch[1]) {
-        this.applyBehavior(element, urlMatch[1]);
+      const url = this.extractURL(behaviorUrl);
+
+      if (url) {
+        this.applyBehavior(element, url);
       }
     }
+  }
+
+  extractURL(propertyValue) {
+    const urlMatch = propertyValue
+      .trim()
+      .match(/url\(\s*['"]?([^'"]+)['"]?\s*\)/i);
+
+    return urlMatch ? urlMatch[1] : null;
   }
 
   observeMutations() {
