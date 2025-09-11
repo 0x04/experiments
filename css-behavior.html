@@ -28,29 +28,28 @@ export default function(element) {
 <title>CSS Behavior (like IE-HTC)</title>
 </head>
 <style>
-  .background-red {
-    --behavior: url('/css-behavior/behaviors/test.mjs');
+  .behavior.red-bg {
+    --behavior: url('/css-behavior/behaviors/red-bg.mjs');
   }
 </style>
 <body>
 <script type="module">
   import { init } from './css-behavior/css-behavior.mjs';
 
-  init();
+  init('.behavior');
 </script>
 <!-- Testing -->
 <script>
   function createTestElement() {
     const div = document.createElement('div');
-    const quantity = document.querySelectorAll('div[data-has-behavior]').length + 1;
-    div.className = 'background-red';
-    div.setAttribute('data-has-behavior', '');
+    const quantity = document.querySelectorAll('button ~ div[data-has-behavior]').length + 1;
+    div.classList.add('behavior', 'red-bg');
     div.textContent = `This is a dynamically added test behavior element (${quantity})!`;
     document.body.appendChild(div);
   }
 </script>
-<div class="background-red" data-has-behavior>This is a test behavior (./css-behavior/behaviors/test.mjs)!</div>
-<div class="background-red" data-has-behavior>This is a test behavior (2) (./css-behavior/behaviors/test.mjs)!</div>
+<div class="behavior red-bg">This is a test behavior (behaviors/red-bg.mjs)!</div>
+<div class="behavior red-bg">This is a test behavior (2) (behaviors/red-bg.mjs)!</div>
 <button onclick="createTestElement()">Add new element</button>
 </body>
 </html>
