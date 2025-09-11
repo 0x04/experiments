@@ -28,8 +28,46 @@ export default function(element) {
 <title>CSS Behavior (like IE-HTC)</title>
 </head>
 <style>
-  .behavior.red-bg {
-    --behavior: url('/css-behavior/behaviors/red-bg.mjs');
+  .behavior {
+    &.red-bg {
+      --behavior: url('/css-behavior/behaviors/red-bg.mjs');
+    }
+
+    &.mouse-coordinates {
+      --behavior: url('/css-behavior/behaviors/mouse-coordinates.mjs');
+
+      position: relative;
+      margin-bottom: 1rem;
+      border: 2px solid #ccc;
+      border-radius: 0.5rem;
+      width: 300px;
+      height: 300px;
+      background-color: #eee;
+
+      &::before {
+        --width: 2rem;
+        --height: 2rem;
+
+        content: '';
+        position: absolute;
+        inset: calc(var(--width) / 2 * -1) auto auto calc(var(--height) / 2 * -1);
+        display: block;
+        border-radius: 100%;
+        width: var(--width);
+        height: var(--height);
+        background-color: hsl(30, 100%, 50%);
+        opacity: 0;
+        scale: 0;
+        transition: opacity 250ms ease-out, scale 250ms ease-out;
+        translate: var(--mouse-x, 0) var(--mouse-y, 0);
+        pointer-events: none;
+      }
+
+      &.mouse-over::before {
+        opacity: 1;
+        scale: 1;
+      }
+    }
   }
 </style>
 <body>
@@ -48,6 +86,7 @@ export default function(element) {
     document.body.appendChild(div);
   }
 </script>
+<div class="behavior mouse-coordinates"></div>
 <div class="behavior red-bg">This is a test behavior (behaviors/red-bg.mjs)!</div>
 <div class="behavior red-bg">This is a test behavior (2) (behaviors/red-bg.mjs)!</div>
 <button onclick="createTestElement()">Add new element</button>
