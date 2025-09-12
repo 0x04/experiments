@@ -1,19 +1,30 @@
 {
-  "name": "experiments",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/0x04/experiments/issues"
   },
+  "description": "",
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "husky": "^9.1.7"
+  },
+  "homepage": "https://github.com/0x04/experiments#readme",
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+    }
+  },
+  "license": "MIT",
+  "main": "index.js",
+  "name": "experiments",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/0x04/experiments.git"
   },
-  "author": "",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/0x04/experiments/issues"
+  "scripts": {
+    "prepare": "husky",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "homepage": "https://github.com/0x04/experiments#readme",
-  "description": ""
+  "version": "1.0.0"
 }
