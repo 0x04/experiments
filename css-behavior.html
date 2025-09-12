@@ -29,6 +29,22 @@ export default function(element) {
 </head>
 <style>
   .behavior {
+    &.mpf-default {
+      --behavior: url('/css-behavior/behaviors/multiple-per-file.mjs');
+    }
+
+    &.mpf-red {
+      --behavior: url('/css-behavior/behaviors/multiple-per-file.mjs#red');
+    }
+
+    &.mpf-green {
+      --behavior: url('/css-behavior/behaviors/multiple-per-file.mjs#green');
+    }
+
+    &.mpf-blue {
+      --behavior: url('/css-behavior/behaviors/multiple-per-file.mjs#blue');
+    }
+
     &.red-bg {
       --behavior: url('/css-behavior/behaviors/red-bg.mjs');
     }
@@ -80,15 +96,22 @@ export default function(element) {
 <script>
   function createTestElement() {
     const div = document.createElement('div');
-    const quantity = document.querySelectorAll('button ~ div[data-has-behavior]').length + 1;
+    const quantity = document.querySelectorAll('button ~ div.behavior').length + 1;
     div.classList.add('behavior', 'red-bg');
-    div.textContent = `This is a dynamically added test behavior element (${quantity})!`;
+    div.textContent = `Behavior: behaviors/red-bg.mjs (${quantity})`;
     document.body.appendChild(div);
   }
 </script>
 <div class="behavior mouse-coordinates"></div>
-<div class="behavior red-bg">This is a test behavior (behaviors/red-bg.mjs)!</div>
-<div class="behavior red-bg">This is a test behavior (2) (behaviors/red-bg.mjs)!</div>
+<hr>
+<div class="behavior mpf-default">Behavior: behavior/multiple-per-file.mjs</div>
+<div class="behavior mpf-red">Behavior: behavior/multiple-per-file.mjs#red</div>
+<div class="behavior mpf-green">Behavior: behavior/multiple-per-file.mjs#green</div>
+<div class="behavior mpf-blue">Behavior: behavior/multiple-per-file.mjs#blue</div>
+<hr>
+<div class="behavior red-bg">Behavior: behaviors/red-bg.mjs (1)</div>
+<div class="behavior red-bg">Behavior: behaviors/red-bg.mjs (2)</div>
+<hr>
 <button onclick="createTestElement()">Add new element</button>
 </body>
 </html>

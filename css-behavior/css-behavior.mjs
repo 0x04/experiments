@@ -17,8 +17,10 @@ class CSSBehavior {
   }
 
   importBehavior(url) {
-    return import(url)
-      .then(module => module.default)
+    const [ moduleURL, moduleName = 'default' ] = url.split('#');
+
+    return import(moduleURL)
+      .then(module => module[moduleName])
       .catch(err => {
         console.error(`Failed to load behavior from ${url}:`, err);
       });
